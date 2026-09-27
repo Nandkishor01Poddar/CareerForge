@@ -4,12 +4,12 @@
   "description": "",
   "main": "./src/server.js",
   "scripts": {
-    "Backend": "nodemon ./src/server.js"
+    "backend": "nodemon ./src/server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",

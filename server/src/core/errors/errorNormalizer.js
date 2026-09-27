@@ -1,3 +1,5 @@
+import AppError from "./AppError.js";
+
 const normalizeError = (error) => {
   if (error instanceof AppError) {
     return error;
