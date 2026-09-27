@@ -24,4 +24,16 @@ const generateTokens = ({ userId, role }) => {
     }
 }
 
-export default generateTokens
+// const verifyAccessToken = () => {
+
+// }
+
+const verifyRefreshToken = (refreshToken) => {
+    return jwt.verify(refreshToken, config.refresh_token)
+}
+
+
+export {
+    generateTokens,
+    verifyRefreshToken
+}

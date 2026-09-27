@@ -1,7 +1,7 @@
 import { Router } from "express"
-import { registerValidation } from "./validation/auth.validate.js"
+import { loginValidation, registerValidation } from "./validation/auth.validate.js"
 import asyncHandler from "../../middleware/asyncHandler.js"
-import { register } from "./auth.controller.js"
+import { login, logout, refreshToken, register } from "./auth.controller.js"
 
 const router = Router()
 
@@ -10,6 +10,22 @@ router.post(
     "/register",
     registerValidation,
     asyncHandler(register)
+)
+
+router.post(
+    "/login",
+    loginValidation,
+    asyncHandler(login)
+)
+
+router.post(
+    "/refresh-token",
+    asyncHandler(refreshToken)
+)
+
+router.post(
+    "/logout",
+    asyncHandler(logout)
 )
 
 export default router
