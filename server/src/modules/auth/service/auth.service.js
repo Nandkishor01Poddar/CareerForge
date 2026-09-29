@@ -251,9 +251,24 @@ const logoutService = async (refreshToken) => {
     }
 
     // Invalidate refresh session
-    await userModel.findByIdAndUpdate(user._id, {
-        refreshTokenHash: null,
-    });
+    const cleared = await userModel.findOneAndUpdate(
+        {
+            _id: user._id,
+            refreshTokenHash: incomingRefreshTokenHash,
+        },
+        {
+            $set: { refreshTokenHash: null },
+        }
+    );
+
+    if (!cleared) {
+        throw new AppError({
+            message: "Invalid refresh token",
+            statusCode: 401,
+            code: ERROR_CODES.TOKEN_INVALID,
+            errors: [],
+        });
+    }
 
     return {
         id: user._id,
