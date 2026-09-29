@@ -12,7 +12,6 @@ const registerUserService = async (data) => {
         $or: [{ email }, { username }]
     })
 
-    // console.log(isUserExist)
 
     if (isUserExist) {
         let field = "email";
@@ -50,14 +49,8 @@ const registerUserService = async (data) => {
         role: user.role
     })
 
-    // console.log("BEFORE HASH");
-    // console.log("refreshToken:", refreshToken);
-    // console.log("typeof refreshToken:", typeof refreshToken);
 
     const refreshTokenHash = hashToken(refreshToken);
-
-    // console.log("AFTER HASH");
-    // console.log("refreshTokenHash:", refreshTokenHash);
 
     await userModel.findByIdAndUpdate(user._id, {
         refreshTokenHash
@@ -95,8 +88,6 @@ const loginUserService = async ({ username, email, password }) => {
     }
 
     const passwordMatch = await isPassMatch(password, user.passwordHash)
-
-    console.log(passwordMatch)
 
     if (!passwordMatch) {
         throw new AppError({
@@ -187,9 +178,28 @@ const refreshTokenService = async (refreshToken) => {
     const newRefreshTokenHash = hashToken(newRefreshToken);
 
     // 9. Replace old refresh token hash
-    await userModel.findByIdAndUpdate(user._id, {
-        refreshTokenHash: newRefreshTokenHash,
-    });
+    const updatedUser = await userModel.findOneAndUpdate(
+        {
+            _id: user._id,
+            refreshTokenHash: incomingRefreshTokenHash,
+        },
+        {
+            $set: {
+                refreshTokenHash: newRefreshTokenHash,
+            },
+        }
+    );
+
+    if (!updatedUser) {
+        throw new AppError({
+            message: "Invalid refresh token",
+            statusCode: 401,
+            code: ERROR_CODES.TOKEN_INVALID,
+            errors: [],
+        });
+    }
+
+
 
     // 10. Return tokens
     return {
@@ -205,39 +215,92 @@ const logoutService = async (refreshToken) => {
             message: "Refresh token is required",
             statusCode: 401,
             code: ERROR_CODES.UNAUTHORIZED,
-            errors: []
-        })
+            errors: [],
+        });
     }
 
-    const verifiedRefreshToken = verifyRefreshToken(refreshToken)
+    // Verify refresh token
+    const verifiedRefreshToken = verifyRefreshToken(refreshToken);
 
+    // Extract userId
+    const { userId } = verifiedRefreshToken;
 
-    const { userId } = verifiedRefreshToken
-
-    const user = await userModel.findById(userId)
+    // Find user
+    const user = await userModel.findById(userId);
 
     if (!user) {
         throw new AppError({
             message: "User not found",
             statusCode: 401,
             code: ERROR_CODES.UNAUTHORIZED,
+            errors: [],
+        });
+    }
+
+    // Hash incoming refresh token
+    const incomingRefreshTokenHash = hashToken(refreshToken);
+
+    // Check active refresh session
+    if (incomingRefreshTokenHash !== user.refreshTokenHash) {
+        throw new AppError({
+            message: "Invalid refresh token",
+            statusCode: 401,
+            code: ERROR_CODES.TOKEN_INVALID,
+            errors: [],
+        });
+    }
+
+    // Invalidate refresh session
+    await userModel.findByIdAndUpdate(user._id, {
+        refreshTokenHash: null,
+    });
+
+    return {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+    };
+};
+
+
+
+
+const meService = async (userId) => {
+    const user = await userModel
+        .findById(userId)
+        .select("-passwordHash -refreshTokenHash")
+
+
+    if (!user) {
+        throw new AppError({
+            message: "User not found",
+            statusCode: 404,
+            code: ERROR_CODES.USER_NOT_FOUND,
             errors: []
         })
     }
 
-    await userModel.findOneAndUpdate(user._id, {
-        $set: {
-            refreshTokenHash: null
-        }
-    })
+    return {
+        id: user._id,
+        email: user.email,
+        username: user.username,
+        fullName: {
+            firstName: user.fullName.firstName,
+            lastName: user.fullName.lastName
+        },
+        role: user.role,
+        isEmailVerified: user.isEmailVerified
+    }
 
-    return user
 }
+
+
 
 
 export {
     registerUserService,
     loginUserService,
     refreshTokenService,
-    logoutService
+    logoutService,
+    meService
 }

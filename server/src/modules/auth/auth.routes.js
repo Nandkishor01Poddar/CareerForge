@@ -1,7 +1,8 @@
 import { Router } from "express"
 import { loginValidation, registerValidation } from "./validation/auth.validate.js"
 import asyncHandler from "../../middleware/asyncHandler.js"
-import { login, logout, refreshToken, register } from "./auth.controller.js"
+import { login, logout, me, refreshToken, register } from "./auth.controller.js"
+import authMiddleware from "../../middleware/auth.middleware.js"
 
 const router = Router()
 
@@ -26,6 +27,12 @@ router.post(
 router.post(
     "/logout",
     asyncHandler(logout)
+)
+
+router.get(
+    "/me",
+    authMiddleware,
+    asyncHandler(me)
 )
 
 export default router

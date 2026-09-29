@@ -1,6 +1,6 @@
 import { sendResponse } from "../../core/responses/response.js"
 import { clearRefreshTokenCookie, setRefreshTokenCookie } from "../../utils/cookie.util.js"
-import { loginUserService, logoutService, refreshTokenService, registerUserService } from "./service/auth.service.js"
+import { loginUserService, logoutService, meService, refreshTokenService, registerUserService } from "./service/auth.service.js"
 
 const register = async (req, res, next) => {
     const result = await registerUserService(req.body)
@@ -70,9 +70,25 @@ const logout = async(req, res) => {
 }
 
 
+
+const me = async(req, res) => {
+    const user = await meService(req.user.userId)
+
+    return sendResponse(res, {
+        statusCode: 200,
+        message: "User profile fetched successfully",
+        data: {
+            user
+        }
+    })
+
+}
+
+
 export {
     register,
     login,
     refreshToken,
-    logout
+    logout,
+    me
 }

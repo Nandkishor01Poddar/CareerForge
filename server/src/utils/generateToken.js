@@ -32,8 +32,13 @@ const verifyRefreshToken = (refreshToken) => {
     return jwt.verify(refreshToken, config.refresh_token)
 }
 
+const verifyAccessToken = (accessToken) => {
+    return jwt.verify(accessToken, config.access_token)
+}
+
 
 export {
     generateTokens,
-    verifyRefreshToken
+    verifyRefreshToken,
+    verifyAccessToken
 }
